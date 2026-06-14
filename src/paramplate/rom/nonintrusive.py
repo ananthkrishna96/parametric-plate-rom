@@ -546,7 +546,7 @@ class LegacyTorchNNRegressor(CoefficientRegressor):
 
     def _train_stage(self, train_loader, val_loader, *, epochs, lr, weight_decay, scheduler_patience,
                      early_stopping_patience, min_delta, grad_clip, use_field_loss=False,
-                     basis=None, coeff_mean=None, coeff_std=None, field_weight=1.0, coeff_anchor=0.01,
+                     basis=None, pod_mean=None, coeff_mean=None, coeff_std=None, field_weight=1.0, coeff_anchor=0.01,
                      label="coeff"):
         assert self.model is not None
         optimizer = optim.AdamW(self.model.parameters(), lr=float(lr), weight_decay=float(weight_decay))
@@ -557,6 +557,7 @@ class LegacyTorchNNRegressor(CoefficientRegressor):
         wait = 0
         hist = {"train": [], "val": [], "lr": []}
         B_t = torch.tensor(basis, dtype=torch.float32, device=self.device) if basis is not None else None
+        mean_t = torch.tensor(pod_mean, dtype=torch.float32, device=self.device) if pod_mean is not None else None
         cm_t = torch.tensor(coeff_mean, dtype=torch.float32, device=self.device) if coeff_mean is not None else None
         cs_t = torch.tensor(coeff_std, dtype=torch.float32, device=self.device) if coeff_std is not None else None
 
@@ -570,6 +571,8 @@ class LegacyTorchNNRegressor(CoefficientRegressor):
             sb = batch[2].to(self.device)
             pred_c = pred * cs_t + cm_t
             pred_u = pred_c @ B_t.T
+            if mean_t is not None:
+                pred_u = pred_u + mean_t
             field_loss = torch.mean(torch.sum((pred_u - sb) ** 2, dim=1) / (torch.sum(sb ** 2, dim=1) + 1e-24))
             return float(field_weight) * field_loss + float(coeff_anchor) * coeff_loss
 
@@ -660,6 +663,7 @@ class LegacyTorchNNRegressor(CoefficientRegressor):
                 grad_clip=cfg.get("field_grad_clip", 1.0),
                 use_field_loss=True,
                 basis=pod.basis,
+                pod_mean=getattr(pod, "mean", None),
                 coeff_mean=self.coeff_scaler.mean_,
                 coeff_std=self.coeff_scaler.scale_,
                 field_weight=cfg.get("field_loss_weight", 1.0),
@@ -868,7 +872,155 @@ class LegacyPODAERegressor(CoefficientRegressor):
             grad_clip=cfg.get("latent_grad_clip", 1.0),
             label="mu-to-latent",
         )
+        self._fine_tune_online_path(
+            Mu,
+            C,
+            train_idx,
+            val_idx,
+            snapshots=context.get("snapshots_train"),
+            pod=context.get("pod"),
+        )
         return self
+
+    def _fine_tune_online_path(self, Mu, C, train_idx, val_idx, *, snapshots, pod) -> None:
+        """Legacy POD-AE end-to-end online-path fine-tuning.
+
+        This mirrors the notebook's ``finetune_pod_ae_end_to_end`` stage:
+        parameter-to-latent MLP + decoder are optimized with a field-relative
+        loss and a small coefficient anchor.  The encoder is normally frozen.
+        For centered POD artifacts, the POD mean must be added back when the
+        reconstructed field is formed; the original notebook POD basis is
+        uncentered, so this term is zero there.
+        """
+        if self.autoencoder is None or self.latent_map is None:
+            return
+        if snapshots is None or pod is None:
+            return
+
+        cfg = self.config
+        if not bool(cfg.get("end_to_end_finetune", True)):
+            return
+
+        epochs = int(cfg.get("e2e_epochs", 500))
+        if epochs <= 0:
+            return
+
+        S = np.asarray(snapshots, dtype=np.float32)
+        B_t = torch.tensor(np.asarray(pod.basis, dtype=np.float32), device=self.device)
+        mean_t = torch.tensor(np.asarray(getattr(pod, "mean", np.zeros(B_t.shape[0])), dtype=np.float32), device=self.device)
+        cmean_t = torch.tensor(self.coeff_scaler.mean_, dtype=torch.float32, device=self.device)
+        cstd_t = torch.tensor(self.coeff_scaler.scale_, dtype=torch.float32, device=self.device)
+
+        train_decoder = bool(cfg.get("e2e_train_decoder", True))
+        train_encoder = bool(cfg.get("e2e_train_encoder", False))
+        if not train_encoder:
+            for par in self.autoencoder.encoder.parameters():
+                par.requires_grad_(False)
+
+        params = list(self.latent_map.parameters())
+        if train_decoder:
+            params += list(self.autoencoder.decoder.parameters())
+        if train_encoder:
+            params += list(self.autoencoder.encoder.parameters())
+        if not params:
+            return
+
+        ds_train = TensorDataset(
+            torch.tensor(Mu[train_idx], dtype=torch.float32),
+            torch.tensor(C[train_idx], dtype=torch.float32),
+            torch.tensor(S[train_idx], dtype=torch.float32),
+        )
+        ds_val = TensorDataset(
+            torch.tensor(Mu[val_idx], dtype=torch.float32),
+            torch.tensor(C[val_idx], dtype=torch.float32),
+            torch.tensor(S[val_idx], dtype=torch.float32),
+        )
+        bs = int(cfg.get("e2e_batch_size", 256))
+        train_loader = DataLoader(ds_train, batch_size=bs, shuffle=bs < len(train_idx))
+        val_loader = DataLoader(ds_val, batch_size=bs, shuffle=False)
+
+        opt = optim.AdamW(params, lr=float(cfg.get("e2e_lr", 3e-5)), weight_decay=float(cfg.get("e2e_weight_decay", 5e-7)))
+        sched = optim.lr_scheduler.ReduceLROnPlateau(opt, mode="min", factor=0.5, patience=int(cfg.get("e2e_scheduler_patience", 50)))
+        coeff_loss_fn = nn.MSELoss()
+        field_weight = float(cfg.get("e2e_field_weight", 1.0))
+        coeff_weight = float(cfg.get("e2e_coeff_weight", 0.01))
+        grad_clip = cfg.get("e2e_grad_clip", 1.0)
+        patience = int(cfg.get("e2e_patience", 120))
+        min_delta = float(cfg.get("e2e_min_delta", 5e-10))
+        log_every = int(cfg.get("log_every", 50))
+
+        best = np.inf
+        best_state = None
+        best_epoch = 0
+        wait = 0
+        hist = {"train": [], "val": [], "lr": []}
+
+        def loss_for_batch(batch):
+            xb, yb, sb = (t.to(self.device) for t in batch)
+            z_scaled = self.latent_map(xb)
+            z_raw = torch.tensor(self.latent_scaler.mean_, dtype=torch.float32, device=self.device) + z_scaled * torch.tensor(self.latent_scaler.scale_, dtype=torch.float32, device=self.device)
+            c_pred_s = self.autoencoder.decoder(z_raw)
+            coeff_loss = coeff_loss_fn(c_pred_s, yb)
+            c_pred = c_pred_s * cstd_t + cmean_t
+            u_pred = c_pred @ B_t.T + mean_t
+            field_loss = torch.mean(torch.sum((u_pred - sb) ** 2, dim=1) / (torch.sum(sb ** 2, dim=1) + 1e-24))
+            return field_weight * field_loss + coeff_weight * coeff_loss
+
+        print(" [POD-AE:e2e] Fine-tuning online path with field-relative loss "
+              f"(epochs={epochs}, lr={float(cfg.get('e2e_lr', 3e-5)):.2e}, "
+              f"field_weight={field_weight:g}, coeff_weight={coeff_weight:g})")
+
+        for ep in range(1, epochs + 1):
+            self.latent_map.train()
+            self.autoencoder.decoder.train(train_decoder)
+            self.autoencoder.encoder.train(train_encoder)
+            total = count = 0.0
+            for batch in train_loader:
+                opt.zero_grad()
+                loss = loss_for_batch(batch)
+                loss.backward()
+                if grad_clip is not None:
+                    torch.nn.utils.clip_grad_norm_(params, float(grad_clip))
+                opt.step()
+                total += float(loss.item()) * batch[0].shape[0]
+                count += batch[0].shape[0]
+            tr = total / max(count, 1)
+
+            self.latent_map.eval()
+            self.autoencoder.eval()
+            total = count = 0.0
+            with torch.no_grad():
+                for batch in val_loader:
+                    loss = loss_for_batch(batch)
+                    total += float(loss.item()) * batch[0].shape[0]
+                    count += batch[0].shape[0]
+            va = total / max(count, 1)
+            sched.step(va)
+            hist["train"].append(tr)
+            hist["val"].append(va)
+            hist["lr"].append(float(opt.param_groups[0]["lr"]))
+            if ep == 1 or ep % log_every == 0 or ep == epochs:
+                print(f" [POD-AE:e2e] Epoch {ep:5d}/{epochs:5d} | train={tr:.4e} | val={va:.4e} | lr={opt.param_groups[0]['lr']:.2e}")
+            if va < best - min_delta:
+                best = va
+                best_epoch = ep
+                wait = 0
+                best_state = {
+                    "latent_map": _clone_state(self.latent_map),
+                    "decoder": _clone_state(self.autoencoder.decoder),
+                    "encoder": _clone_state(self.autoencoder.encoder),
+                }
+            else:
+                wait += 1
+            if wait >= patience:
+                break
+        if best_state is not None:
+            self.latent_map.load_state_dict(best_state["latent_map"])
+            self.autoencoder.decoder.load_state_dict(best_state["decoder"])
+            self.autoencoder.encoder.load_state_dict(best_state["encoder"])
+        hist["best_val"] = float(best)
+        hist["best_epoch"] = int(best_epoch)
+        self.history["end_to_end"] = hist
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         if self.autoencoder is None or self.latent_map is None:
