@@ -9,10 +9,25 @@ built:
 It can run/plan:
 
     intrusive      : POD-projected now; POD-Galerkin is capability-disabled.
-    nonintrusive   : PODI-RBF, PODI-linear, POD-GPR, POD-NN, POD-AE initial latent baseline.
+    nonintrusive   : PODI-RBF, PODI-linear, legacy-aligned POD-GPR, POD-NN, and POD-AE.
 """
 
 from __future__ import annotations
+
+# Match the original notebook's conservative thread policy before importing
+# NumPy/scikit-learn/PyTorch-backed modules.  This is a stability fix only and
+# does not alter any ROM method settings.
+import os
+
+for _var in [
+    "OMP_NUM_THREADS",
+    "MKL_NUM_THREADS",
+    "OPENBLAS_NUM_THREADS",
+    "VECLIB_MAXIMUM_THREADS",
+    "NUMEXPR_NUM_THREADS",
+]:
+    os.environ.setdefault(_var, "1")
+os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
 
 import argparse
 import csv
@@ -53,13 +68,27 @@ def _suite_output_root(suite: str, case: str) -> Path:
     return loc.paper2_rom_root / "suites" / suite / case
 
 
-def _load_scaled_parameters(pod_dir: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def _load_parameters_for_suite(pod_dir: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Load raw train/test parameters for legacy-aligned non-intrusive models.
+
+    The common POD preprocessing stores both scaled parameters and raw parameters.
+    The original THERMOMECHANICAL_FOM_ROM.py non-intrusive classes fit their own
+    StandardScaler objects internally.  Therefore the suite runner must pass raw
+    parameters here, not the already scaled arrays.
+    """
     with np.load(pod_dir / "parameters_scaled.npz", allow_pickle=True) as z:
+        train_idx = np.asarray(z["train_indices"], dtype=int)
+        test_idx = np.asarray(z["test_indices"], dtype=int)
+        if "raw_parameters" in z:
+            raw = np.asarray(z["raw_parameters"], dtype=np.float64)
+            if raw.ndim == 1:
+                raw = raw.reshape(-1, 1)
+            return raw[train_idx], raw[test_idx], train_idx, test_idx
         return (
             np.asarray(z["train_scaled"], dtype=np.float64),
             np.asarray(z["test_scaled"], dtype=np.float64),
-            np.asarray(z["train_indices"], dtype=int),
-            np.asarray(z["test_indices"], dtype=int),
+            train_idx,
+            test_idx,
         )
 
 
@@ -138,10 +167,10 @@ def run_nonintrusive(
     write: bool,
     overwrite: bool,
     seed: int,
-    max_iter: int,
+    max_iter: int | None = None,
 ) -> list[dict]:
     dataset = load_project2_dataset_by_name(case, load_theta=True)
-    P_train, P_test, train_idx, test_idx = _load_scaled_parameters(pod_dir)
+    P_train, P_test, train_idx, test_idx = _load_parameters_for_suite(pod_dir)
     pod_w = load_pod_artifact(pod_dir / "pod_w.npz")
     Xw_train = np.asarray(dataset.snapshots, dtype=np.float64)[train_idx]
     Xw_test = np.asarray(dataset.snapshots, dtype=np.float64)[test_idx]
@@ -159,7 +188,24 @@ def run_nonintrusive(
             continue
         print(f"\nNon-intrusive method: {method}")
 
-        w_model = make_coefficient_regressor(method, kernel=kernel, seed=seed, max_iter=max_iter)
+        config_override = None
+        if max_iter is not None and method == "pod-nn":
+            # Optional smoke-test cap only.  Default None preserves legacy notebook epochs.
+            config_override = {
+                "coeff_epochs": int(max_iter),
+                "field_epochs": max(1, min(275, int(max_iter) // 10)),
+                "log_every": max(1, min(50, int(max_iter))),
+            }
+        elif max_iter is not None and method == "pod-ae":
+            # Optional smoke-test cap only.  Default None preserves legacy notebook epochs.
+            config_override = {
+                "ae_epochs": int(max_iter),
+                "latent_epochs": int(max_iter),
+                "e2e_epochs": max(1, min(500, int(max_iter) // 5)),
+                "log_every": max(1, min(50, int(max_iter))),
+            }
+
+        w_model = make_coefficient_regressor(method, kernel=kernel, seed=seed, n_basis=pod_w.rank, config=config_override)
         w_metrics, Cw_train_pred, Cw_test_pred = evaluate_coefficient_regressor(
             method=method,
             field_name="w",
@@ -177,7 +223,7 @@ def run_nonintrusive(
         theta_predictions = None
         theta_model = None
         if pod_theta is not None and Xt_train is not None and Xt_test is not None:
-            theta_model = make_coefficient_regressor(method, kernel=kernel, seed=seed, max_iter=max_iter)
+            theta_model = make_coefficient_regressor(method, kernel=kernel, seed=seed, n_basis=pod_theta.rank, config=config_override)
             theta_metrics, Ct_train_pred, Ct_test_pred = evaluate_coefficient_regressor(
                 method=method,
                 field_name="theta",
@@ -244,8 +290,9 @@ def main() -> int:
     parser.add_argument("--pod-dir", default=None, help="Existing POD preprocessing directory. Defaults to data_root/.../pod_bases/<case>.")
     parser.add_argument("--methods", default=None, help="Comma-separated method list. Defaults to suite default methods.")
     parser.add_argument("--kernel", default="thin_plate_spline", help="RBF/GPR kernel selector where applicable.")
-    parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--max-iter", type=int, default=2000)
+    parser.add_argument("--seed", type=int, default=100)
+    parser.add_argument("--max-iter", type=int, default=None,
+                        help="Optional cap for NN/AE epochs for quick smoke runs. Omit to preserve legacy notebook defaults.")
     parser.add_argument("--write", action="store_true")
     parser.add_argument("--overwrite", action="store_true")
     args = parser.parse_args()
