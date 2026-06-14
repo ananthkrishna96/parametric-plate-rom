@@ -1,0 +1,20 @@
+# Minimal Project-2 smoke configuration.
+# This file documents the controls used by scripts/project2/run_minimal_mechanical_smoke.py.
+
+case:
+  study_case: 1
+  mu: [9500.0, 9500.0, 2850.0, 3320.0, 100000000.0, -7000.0]
+
+plate:
+  length: 2.0
+  width: 1.0
+  thickness: 0.05
+  mesh_resolution: 8
+  degree: 2
+
+panels:
+  n_vert: 0
+  n_horiz: 0
+
+boundary_condition: simply_supported
+load_type: patch

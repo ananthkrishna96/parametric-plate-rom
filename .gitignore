@@ -47,3 +47,6 @@ data/raw/
 # Local machine-specific files
 local_config.yml
 local_config.yaml
+
+# Generated repository structure reports
+repo_structure*.txt
