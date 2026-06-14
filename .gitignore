@@ -128,3 +128,9 @@ trained_models/
 pod_bases/
 scalers/
 metrics/generated/
+
+# Local SNAPGEN output symlinks created by scripts/project2/snapgen.py setup-data-layout --link-legacy
+legacy/project2/snapgen/RUN_LOGS
+legacy/project2/snapgen/THERMO_SNAPSHOTS
+legacy/project2/snapgen/THERMO_SNAPSHOTS_ADDON_GAPFILL_DOUBLE
+legacy/project2/snapgen/THERMO_SNAPSHOTS_MERGED_DOUBLE
