@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "paramplate"
+version = "0.1.0"
+description = "Parameterized plate finite-element and reduced-order modelling framework"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    { name = "Anantha Krishnan O M" }
+]
+keywords = [
+    "Kirchhoff-Love plates",
+    "finite element method",
+    "C0 interior penalty",
+    "reduced order modelling",
+    "POD",
+    "thermomechanics",
+    "orthotropic plates"
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering"
+]
+
+dependencies = [
+    "numpy",
+    "scipy",
+    "pandas",
+    "matplotlib",
+    "scikit-learn",
+    "tqdm",
+    "pyyaml",
+    "joblib",
+    "tabulate"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

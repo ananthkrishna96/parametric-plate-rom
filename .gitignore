@@ -1,0 +1,49 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Environments
+.venv/
+venv/
+env/
+conda-env/
+.env
+
+# Build
+build/
+dist/
+
+# Logs and generated outputs
+RUN_LOGS/
+logs/
+output/
+outputs/
+tmp/
+*.log
+*.pid
+
+# Heavy simulation data
+THERMO_SNAPSHOTS/
+THERMO_SNAPSHOTS*/
+SNAPSHOTS__*.npz
+snapshots.npz
+sample_*.npz
+
+# Large generated result folders
+results/generated/
+data/full/
+data/raw/
+
+# Local machine-specific files
+local_config.yml
+local_config.yaml

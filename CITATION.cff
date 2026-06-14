@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+title: "Parametric Plate ROM"
+message: "If you use this software, please cite the associated thesis/release."
+type: software
+authors:
+  - family-names: "O M"
+    given-names: "Anantha Krishnan"
+version: "0.1.0"
+date-released: "2026-06-14"
+repository-code: "https://github.com/ananthkrishna96/parametric-plate-rom"
+keywords:
+  - Kirchhoff-Love plates
+  - finite element method
+  - reduced order modelling
+  - thermomechanics
+  - POD
