@@ -1,0 +1,21 @@
+# Copy to configs/data_locations.local.yml and edit for your machine.
+# The local file must remain untracked.
+
+data_root: "/absolute/path/to/parametric-plate-rom-data"
+
+paper1:
+  snapshots_root: "paper1_mechanical/snapshots"
+  rom_root: "paper1_mechanical/rom_training"
+  results_root: "paper1_mechanical/results"
+  logs_root: "paper1_mechanical/logs"
+
+paper2:
+  snapshots_root: "paper2_thermomechanical/snapshots"
+  campaigns_root: "paper2_thermomechanical/campaigns"
+  baseline_root: "paper2_thermomechanical/campaigns/baseline"
+  addon_root: "paper2_thermomechanical/campaigns/addon_gapfill"
+  merged_root: "paper2_thermomechanical/campaigns/merged"
+  rom_root: "paper2_thermomechanical/rom_training"
+  convergence_root: "paper2_thermomechanical/convergence"
+  results_root: "paper2_thermomechanical/results"
+  logs_root: "paper2_thermomechanical/logs"

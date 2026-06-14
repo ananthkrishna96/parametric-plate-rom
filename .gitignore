@@ -50,3 +50,93 @@ local_config.yaml
 
 # Generated repository structure reports
 repo_structure*.txt
+
+# Full research datasets and ROM artifacts
+parametric-plate-rom-data/
+data/external/
+data/raw/
+data/full/
+data/generated/
+*.h5
+*.hdf5
+*.xdmf
+*.pvd
+*.vtu
+*.vtk
+*.pt
+*.pth
+*.ckpt
+*.onnx
+
+# Snapshot archives and ROM outputs
+*SNAPSHOTS*.npz
+*snapshots*.npz
+*POD*.npz
+*ROM*.npz
+trained_models/
+pod_bases/
+scalers/
+metrics/generated/
+
+# FEniCS generated outputs
+output/
+outputs/
+*.xml
+*.xml.gz
+*.xdmf
+*.h5
+
+# Local data location files
+configs/data_locations.local.yml
+
+# Local data location files
+configs/data_locations.local.yml
+
+# External/generated research data
+parametric-plate-rom-data/
+data/external/
+data/raw/
+data/full/
+data/generated/
+
+# Project-2 legacy SNAPGEN generated outputs and symlinks
+legacy/project2/snapgen/THERMO_SNAPSHOTS/
+legacy/project2/snapgen/THERMO_SNAPSHOTS*/
+legacy/project2/snapgen/RUN_LOGS/
+legacy/project2/snapgen/output/
+legacy/project2/snapgen/__pycache__/
+legacy/project2/snapgen/*.pid
+legacy/project2/snapgen/*.log
+legacy/project2/snapgen/*.out
+
+# Snapshot/ROM binary artifacts
+*SNAPSHOTS*.npz
+*snapshots*.npz
+*POD*.npz
+*ROM*.npz
+*.h5
+*.hdf5
+*.xdmf
+*.pvd
+*.vtu
+*.vtk
+*.pt
+*.pth
+*.ckpt
+*.onnx
+trained_models/
+pod_bases/
+scalers/
+metrics/generated/
+
+# Local SNAPGEN output symlinks created by scripts/project2/snapgen.py setup-data-layout --link-legacy
+legacy/project2/snapgen/RUN_LOGS
+legacy/project2/snapgen/THERMO_SNAPSHOTS
+legacy/project2/snapgen/THERMO_SNAPSHOTS_ADDON_GAPFILL_DOUBLE
+legacy/project2/snapgen/THERMO_SNAPSHOTS_MERGED_DOUBLE
+
+# Local SNAPGEN output symlinks created by scripts/project2/snapgen.py setup-data-layout --link-legacy
+legacy/project2/snapgen/RUN_LOGS
+legacy/project2/snapgen/THERMO_SNAPSHOTS
+legacy/project2/snapgen/THERMO_SNAPSHOTS_ADDON_GAPFILL_DOUBLE
+legacy/project2/snapgen/THERMO_SNAPSHOTS_MERGED_DOUBLE
