@@ -19,6 +19,32 @@ from .preprocessing import (
     save_pod_preprocessing,
 )
 from .splits import TrainTestSplit, make_train_test_split
+from .suites import (
+    ROMMethodSpec,
+    ALL_METHODS,
+    COMMON_METHODS,
+    INTRUSIVE_METHODS,
+    NONINTRUSIVE_METHODS,
+    get_method_spec,
+    method_names_for_suite,
+    methods_for_suite,
+    validate_method_list,
+)
+from .intrusive import (
+    LoadedPOD,
+    PODGalerkinCapability,
+    PODProjectedMetrics,
+    evaluate_pod_projection,
+    load_pod_artifact,
+    write_intrusive_projection_summary,
+)
+from .nonintrusive import (
+    CoefficientRegressor,
+    NonIntrusiveMetrics,
+    make_coefficient_regressor,
+    evaluate_coefficient_regressor,
+    write_nonintrusive_result,
+)
 
 __all__ = [
     "ROMDataset",
@@ -39,4 +65,24 @@ __all__ = [
     "save_pod_preprocessing",
     "TrainTestSplit",
     "make_train_test_split",
+    "ROMMethodSpec",
+    "ALL_METHODS",
+    "COMMON_METHODS",
+    "INTRUSIVE_METHODS",
+    "NONINTRUSIVE_METHODS",
+    "get_method_spec",
+    "method_names_for_suite",
+    "methods_for_suite",
+    "validate_method_list",
+    "LoadedPOD",
+    "PODGalerkinCapability",
+    "PODProjectedMetrics",
+    "evaluate_pod_projection",
+    "load_pod_artifact",
+    "write_intrusive_projection_summary",
+    "CoefficientRegressor",
+    "NonIntrusiveMetrics",
+    "make_coefficient_regressor",
+    "evaluate_coefficient_regressor",
+    "write_nonintrusive_result",
 ]
