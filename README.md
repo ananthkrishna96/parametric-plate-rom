@@ -16,11 +16,11 @@ The thermomechanical FOM is physically coupled although its predictive ROMs are 
 
 ## Representative computational figures
 
-| Static verification | Steady thermomechanical setting | Transient setting |
+| Static setting | Steady thermomechanical setting | Transient setting |
 |---|---|---|
-| ![Static FOM, Navier, and 3-D solid comparison](docs/figures/static_verification.png) | ![Thermomechanical plate and heat-exchange setting](docs/figures/thermomechanical_geometry.png) | ![Transient plate, support regime, and localized load](docs/figures/transient_geometry.png) |
+| ![Static plate, Winkler foundation, and transverse-load setting](docs/figures/static_geometry.png) | ![Thermomechanical plate and heat-exchange setting](docs/figures/thermomechanical_geometry.png) | ![Transient plate, support regime, and localized load](docs/figures/transient_geometry.png) |
 
-The figures are reduced-size copies of original computational figures from the final thesis source. Their provenance is recorded in [`docs/figures/README.md`](docs/figures/README.md).
+The figures are reduced-size copies or extracts of original computational figures from the final thesis source. Their provenance is recorded in [`docs/figures/README.md`](docs/figures/README.md).
 
 ## Repository layout
 
