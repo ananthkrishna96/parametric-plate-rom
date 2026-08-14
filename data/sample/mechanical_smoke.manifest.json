@@ -21,7 +21,7 @@
   "trajectory_id_key": null,
   "time_key": null,
   "metric": "Euclidean smoke metric",
-  "sha256": null,
+  "sha256": "1b17caad601735fd5281853de2decad48b438642003746ec1aeb317f0aa5fe4b",
   "notes": "Synthetic low-rank fields for software-path checks only.",
   "metadata": {}
 }

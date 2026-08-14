@@ -9,21 +9,22 @@ import numpy as np
 
 
 def save_probe_history(
-    times: np.ndarray,
+    coordinates: np.ndarray,
     values: np.ndarray,
     output: str | Path,
     *,
+    xlabel: str = "time [s]",
     ylabel: str = "displacement [m]",
 ) -> Path:
-    t = np.asarray(times, dtype=float).reshape(-1)
+    x = np.asarray(coordinates, dtype=float).reshape(-1)
     y = np.asarray(values, dtype=float).reshape(-1)
-    if t.shape != y.shape:
-        raise ValueError("times and values must have one common shape.")
+    if x.shape != y.shape:
+        raise ValueError("coordinates and values must have one common shape.")
     target = Path(output)
     target.parent.mkdir(parents=True, exist_ok=True)
     fig, axis = plt.subplots(figsize=(5.8, 3.2))
-    axis.plot(t, y)
-    axis.set_xlabel("time [s]")
+    axis.plot(x, y)
+    axis.set_xlabel(xlabel)
     axis.set_ylabel(ylabel)
     axis.grid(True, linewidth=0.4)
     fig.tight_layout()

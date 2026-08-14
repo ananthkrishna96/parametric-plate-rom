@@ -17,7 +17,7 @@
   "trajectory_id_key": null,
   "time_key": null,
   "metric": "field-specific Euclidean smoke metric",
-  "sha256": null,
+  "sha256": "3ece77688d67d9eecf437182098159e14e44cea7721eae87ee00acaf2afd972f",
   "notes": "Synthetic one-field ROM data from matched sample assignments.",
   "metadata": {}
 }

@@ -1,0 +1,46 @@
+study: dynamics
+mode: full
+geometry:
+  length: 2.0
+  width: 1.0
+  thickness: 0.05
+  resolution: 32
+  degree: 2
+  n_vertical_interfaces: 0
+  n_horizontal_interfaces: 0
+rigidity:
+  Dx: 10302.20
+  Dy: 10302.20
+  Dxy: 3090.659
+  Ds: 3605.769
+foundation: {stiffness: 100000.0, uplift_factor: 0.001}
+load: {kind: modal_sine, amplitude: 1000.0, x0: 1.0, y0: 0.5, size_x: 0.35, size_y: 0.35}
+boundary_condition: simply_supported
+solver: {absolute: 1.0e-10, relative: 1.0e-10, maximum_iterations: 10}
+dynamics:
+  density: 1200.0
+  foundation_branch: compression
+  final_time: 0.20
+  time_step: 0.001
+  store_every: 1
+  rayleigh: {alpha_M: 0.0, alpha_K: 0.0}
+verification:
+  default_branch: compression
+  frequency_regimes: [none, compression, uplift]
+  n_modes: 8
+  patch_modal_modes: 12
+  navier_search_order: 12
+  center_probe: [1.0, 0.5]
+  panel_probe: [0.73, 0.37]
+  single_mode_load: 1000.0
+  energy_initial_amplitude: 0.0001
+  harmonic_damping_ratio: 0.02
+  harmonic_ratio: [0.20, 2.50]
+  harmonic_points: 180
+  patch_load:
+    amplitude: 1500.0
+    x0: 1.0
+    y0: 0.5
+    size_x: 0.35
+    size_y: 0.35
+verification_output: results/dynamics/verification

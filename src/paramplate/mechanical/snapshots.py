@@ -4,20 +4,28 @@ from __future__ import annotations
 
 from dataclasses import replace
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Sequence
 
 import numpy as np
 
 from paramplate.core.parameters import FoundationParameters, LoadParameters, OrthotropicRigidity
-from paramplate.core.sampling import latin_hypercube
-from paramplate.io.manifest import DatasetManifest, write_manifest
+from paramplate.core.sampling import ParameterRange, latin_hypercube
+from paramplate.io.manifest import DatasetManifest, sha256_file, write_manifest
 
 from .fem import MechanicalFEMConfig, MechanicalPlateFOM
 from .model import MechanicalParameters, direct_parameter_ranges
 
 
-def direct_lhs(n_samples: int, *, seed: int = 100) -> np.ndarray:
-    return latin_hypercube(direct_parameter_ranges(), int(n_samples), seed=seed)
+def direct_lhs(
+    n_samples: int,
+    *,
+    seed: int = 100,
+    ranges: Sequence[ParameterRange] | None = None,
+) -> np.ndarray:
+    declared = direct_parameter_ranges() if ranges is None else tuple(ranges)
+    if tuple(spec.name for spec in declared) != ("Dx", "Dy", "Dxy", "Ds", "ks", "q"):
+        raise ValueError("Static direct ranges must be ordered as Dx, Dy, Dxy, Ds, ks, q.")
+    return latin_hypercube(declared, int(n_samples), seed=seed)
 
 
 def solve_direct_sample(base: MechanicalFEMConfig, values: Iterable[float]):
@@ -76,6 +84,7 @@ def generate_snapshot_archive(
         split_level="sample",
         expected_shape=tuple(np.asarray(outputs).shape),
         metric="H1-type",
+        sha256=sha256_file(target),
         notes="Upward-positive displacement; downward loads are negative.",
         metadata={"n_samples": int(table.shape[0]), "native_snapshots": bool(include_native)},
     )

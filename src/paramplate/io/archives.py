@@ -44,11 +44,32 @@ def archive_keys(path: str | Path) -> tuple[str, ...]:
         return tuple(sorted(name[:-4] for name in zf.namelist() if name.endswith(".npy")))
 
 
-def small_array(path: str | Path, key: str) -> np.ndarray:
-    with np.load(path, allow_pickle=True) as data:
+def small_array(
+    path: str | Path,
+    key: str,
+    *,
+    allow_unsafe_pickle: bool = False,
+) -> np.ndarray:
+    """Load one small member of an NPZ archive.
+
+    Pickle-backed object arrays are rejected by default.  The opt-in flag is
+    provided only for explicitly trusted legacy archives; normal repository
+    schemas use numeric or fixed-width string arrays and do not require it.
+    """
+
+    with np.load(path, allow_pickle=bool(allow_unsafe_pickle)) as data:
         if key not in data.files:
             raise KeyError(f"{key!r} is missing from {path}.")
-        return np.asarray(data[key])
+        try:
+            return np.asarray(data[key])
+        except ValueError as exc:
+            if "Object arrays cannot be loaded" in str(exc):
+                raise ValueError(
+                    f"{key!r} in {path} is pickle-backed. Convert the archive to "
+                    "numeric/fixed-width string arrays, or load only an explicitly "
+                    "trusted legacy archive with allow_unsafe_pickle=True."
+                ) from exc
+            raise
 
 
 def metadata_json(path: str | Path, key: str = "metadata_json") -> dict[str, Any]:

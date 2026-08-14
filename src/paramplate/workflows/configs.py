@@ -69,6 +69,11 @@ def mechanical_config(config: Mapping[str, Any]) -> MechanicalFEMConfig:
         boundary_condition=str(config.get("boundary_condition", "free_edge")),
         tolerances=solver_tolerances(config),
         linear_solver=str(config.get("linear_solver", "mumps")),
+        fixed_foundation_factor=(
+            None
+            if config.get("fixed_foundation_factor") is None
+            else float(config["fixed_foundation_factor"])
+        ),
     )
 
 

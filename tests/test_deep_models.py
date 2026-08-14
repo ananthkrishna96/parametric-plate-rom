@@ -23,7 +23,7 @@ def _data() -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     return X[:18], Y[:18], X[18:], Y[18:]
 
 
-def test_pod_nn_training_and_shape() -> None:
+def test_pod_nn_training_and_shape(tmp_path) -> None:
     Xtr, Ytr, Xva, Yva = _data()
     model = PODNNRegressor(
         2,
@@ -38,8 +38,12 @@ def test_pod_nn_training_and_shape() -> None:
         ),
     )
     model.fit(Xtr, Ytr, Xva, Yva)
-    assert model.predict(Xva).shape == Yva.shape
+    predicted = model.predict(Xva)
+    assert predicted.shape == Yva.shape
     assert model.history.best_epoch >= 0
+    checkpoint = model.save(tmp_path / "pod_nn.pt")
+    restored = PODNNRegressor.load(checkpoint)
+    np.testing.assert_allclose(restored.predict(Xva), predicted, rtol=1.0e-6, atol=1.0e-7)
 
 
 def test_neural_model_initialization_is_seeded() -> None:

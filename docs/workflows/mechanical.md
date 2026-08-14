@@ -1,35 +1,61 @@
 # Static mechanical workflow
 
-## Model and full-order path
+## Full-order problem
 
-The static study solves the small-deflection aligned-orthotropic Kirchhoff--Love plate problem with parameterized bending rigidities, load, foundation stiffness, and optional panel seams. The foundation is regularized rather than removed in uplift. `MechanicalPlateFOM` assembles the panel-interior symmetric `C0-IPG` terms, physical seam penalties, and the nonlinear foundation residual in DOLFIN. A manual active-set/Newton path applies an algebraic residual stopping criterion.
+The static study solves the small-deflection aligned-orthotropic Kirchhoff–Love plate problem with parameterized bending rigidities, load, foundation stiffness, and optional panel seams. Displacement and transverse loading are upward-positive; downward pressure is therefore negative. The foundation uses the compression stiffness where `w < 0` and the regularized uplift stiffness elsewhere.
 
-Monolithic states are represented directly in the plate space. Panelized states use independent panel components and are transferred to a fixed continuous displacement output for the non-intrusive ROM and field-error workflows. Native panel states remain available for the intrusive method.
+`MechanicalPlateFOM` assembles the panel-interior symmetric `C0-IPG` terms, physical seam penalties, and the nonlinear foundation residual in DOLFIN. Numerical interior facets and physical panel interfaces are treated separately. The active-set/Newton iteration stops on the configured algebraic residual threshold.
 
-## Verification and data generation
+A panelized solve stores a native broken mixed-space field and transfers the physical panel displacement to a fixed continuous output space. The transferred field is used by the non-intrusive ROMs and field-error calculations. A native basis is required by intrusive POD–Galerkin.
 
-`paramplate.mechanical.navier` provides the truncated double-sine reference for simply supported rectangular plates. The thesis also compares the finite-element solution with an independent three-dimensional solid model, examines spatial refinement, and assesses two-, three-, four-, and six-panel layouts. The repository includes the Navier evaluator and comparison utilities; reproducing the full three-dimensional comparison requires the external reference arrays used in the thesis.
+## Verification
+
+`configs/mechanical/verification_monolithic.yml` records the simply supported monolithic benchmark used by the Navier comparison. The driver can also compare a FOM field with a trusted regular-grid archive or compare a finite-penalty panel model with a monolithic FOM.
+
+```bash
+python scripts/mechanical/run_verification.py \
+  --config configs/mechanical/verification_monolithic.yml \
+  --mode navier --dry-run
+
+python scripts/mechanical/run_verification.py \
+  --config configs/mechanical/verification_panel_2.yml \
+  --reference-config configs/mechanical/verification_panel_monolithic.yml \
+  --mode panel --dry-run
+```
+
+The panel configurations cover two-, three-, four-, and six-panel layouts. Removing `--dry-run` requires DOLFIN 2019.1 and `mshr`. The independent three-dimensional solid and refined unilateral reference fields are external research artifacts; they may be supplied through the regular-grid comparison path after conversion to the documented numeric schema.
+
+## Snapshot generation
+
+The monolithic direct campaign uses the ordered parameters
+
+```text
+Dx, Dy, Dxy, Ds, ks, q
+```
+
+and an upward-positive load convention. Ranges declared in YAML are passed to the Latin-hypercube sampler rather than used as display-only metadata.
 
 ```bash
 python scripts/mechanical/run_workflow.py \
-  --config configs/mechanical/smoke.yml --action navier
+  --config configs/mechanical/thesis_direct.yml --dry-run
+python scripts/mechanical/run_workflow.py \
+  --config configs/mechanical/smoke.yml \
+  --action snapshots --output results/mechanical_smoke.npz
 ```
 
-The six-parameter direct campaign records `Dx`, `Dy`, `Dxy`, `Ds`, `ks`, and the signed load amplitude. The thesis configuration uses 1000 Latin-hypercube snapshots and a separate predictive assessment. Panel campaign data remain external because of their size.
+The archive stores the transferred displacement, optional native state, parameter order, Newton iterations, residuals, output unit, and a companion manifest. Full thesis snapshots remain external.
 
-## ROMs
+## Reduced-order workflows
 
-The active static methods are:
+The active static inventory is:
 
-- non-hyper-reduced POD--Galerkin in the native finite-element space;
-- POD--Proj;
-- PODI--RBF and PODI--Linear;
-- POD--GPR;
-- coefficient-only POD--NN with `128/96/64` ELU hidden layers and a linear output.
+- non-hyper-reduced intrusive POD–Galerkin in the native finite-element space;
+- POD–Proj as a compression diagnostic;
+- PODI–RBF and PODI–Linear;
+- POD–GPR;
+- coefficient-only POD–NN with `128/96/64` ELU hidden layers and a linear output.
 
-The intrusive implementation retains full residual and Jacobian assembly. Its online acceleration is therefore limited by full-order assembly, exactly as stated in the thesis; no hyper-reduction claim is made. POD--DL-ROM and direct DL-ROM are not exposed as static thesis workflows.
-
-The intrusive entry point is programmatic because its basis must be assembled in the native finite-element space rather than the transferred output space:
+The intrusive implementation retains full residual and Jacobian assembly. Its online acceleration is therefore limited by full-order assembly; no hyper-reduction claim is made. POD–DL-ROM and direct DL-ROM are not exposed as static thesis workflows.
 
 ```python
 import numpy as np
@@ -41,16 +67,8 @@ from paramplate.workflows import mechanical_config
 
 raw = load_config("configs/mechanical/thesis_direct.yml", expected_study="mechanical")
 fom = MechanicalPlateFOM(mechanical_config(raw))
-native_basis = np.load("/external/path/mechanical_native_basis.npy")
+native_basis = np.load("/external/path/mechanical_native_basis.npy", allow_pickle=False)
 result = MechanicalPODGalerkin(fom, native_basis).solve()
 ```
 
-The native basis and FOM must use the same mesh, mixed-space ordering, and boundary treatment. A transferred displacement basis is not interchangeable with the native basis required by this solver.
-
-## Configurations
-
-- `configs/mechanical/smoke.yml`: small simply supported dependency check;
-- `configs/mechanical/thesis_direct.yml`: six-parameter monolithic campaign;
-- `configs/mechanical/thesis_panel_smoke.yml`: panel-aligned full-order path and external-data setup.
-
-A DOLFIN run requires the legacy FEniCS environment. Configuration composition and the Navier reference can be checked without it.
+The native basis and FOM must use the same mesh, mixed-space ordering, boundary treatment, and constrained degrees of freedom.

@@ -4,21 +4,31 @@ from __future__ import annotations
 
 from dataclasses import replace
 from pathlib import Path
+from typing import Sequence
 
 import numpy as np
 
 from paramplate.core.parameters import LoadParameters, OrthotropicRigidity
-from paramplate.core.sampling import latin_hypercube
-from paramplate.io.manifest import DatasetManifest, write_manifest
+from paramplate.core.sampling import ParameterRange, latin_hypercube
+from paramplate.io.manifest import DatasetManifest, sha256_file, write_manifest
 
 from .fem import TransientFEMConfig, TransientPlateFOM
 from .model import CAMPAIGNS, parameter_ranges
 
 
-def campaign_lhs(campaign: str, n_trajectories: int | None = None, *, seed: int = 100) -> np.ndarray:
+def campaign_lhs(
+    campaign: str,
+    n_trajectories: int | None = None,
+    *,
+    seed: int = 100,
+    ranges: Sequence[ParameterRange] | None = None,
+) -> np.ndarray:
     spec = CAMPAIGNS[campaign]
     count = spec.n_trajectories if n_trajectories is None else int(n_trajectories)
-    return latin_hypercube(parameter_ranges(campaign), count, seed=seed)
+    declared = parameter_ranges(campaign) if ranges is None else tuple(ranges)
+    if tuple(item.name for item in declared) != spec.parameter_names:
+        raise ValueError(f"Transient campaign {campaign} ranges must follow {spec.parameter_names}.")
+    return latin_hypercube(declared, count, seed=seed)
 
 
 def configuration_for_row(base: TransientFEMConfig, campaign: str, row: np.ndarray) -> tuple[TransientFEMConfig, LoadParameters]:
@@ -90,6 +100,7 @@ def generate_trajectory_archive(
         trajectory_id_key="trajectory_ids",
         time_key="times",
         metric="Euclidean snapshot SVD followed by FE H1-type reorthonormalization",
+        sha256=sha256_file(target),
         notes="Complete trajectories must be split before row flattening.",
         metadata={"campaign": campaign, "stored_states_per_trajectory": int(times.size)},
     )

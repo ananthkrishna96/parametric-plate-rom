@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from typing import Any
 
@@ -194,10 +194,41 @@ class PODNNRegressor:
 
     @classmethod
     def load(cls, path: str | Path, *, map_location: str = "cpu") -> "PODNNRegressor":
+        """Load a repository checkpoint using PyTorch's restricted loader.
+
+        Checkpoints remain executable research artifacts and should come from a
+        trusted source. The restricted loader avoids arbitrary Python-object
+        unpickling and the payload schema is validated before model construction.
+        """
+
         torch, _ = require_torch()
-        payload = torch.load(path, map_location=map_location, weights_only=False)
+        payload = torch.load(path, map_location=map_location, weights_only=True)
+        if not isinstance(payload, dict):
+            raise ValueError("POD--NN checkpoint payload must be a mapping.")
+        expected = {
+            "input_dimension",
+            "output_dimension",
+            "config",
+            "history",
+            "state_dict",
+        }
+        if set(payload) != expected:
+            missing = sorted(expected.difference(payload))
+            extra = sorted(set(payload).difference(expected))
+            raise ValueError(
+                f"POD--NN checkpoint schema mismatch; missing={missing}, extra={extra}."
+            )
+        if not isinstance(payload["config"], dict) or not isinstance(payload["history"], dict):
+            raise ValueError("POD--NN checkpoint config and history must be mappings.")
+        if not isinstance(payload["state_dict"], dict):
+            raise ValueError("POD--NN checkpoint state_dict must be a mapping.")
+        input_dimension = int(payload["input_dimension"])
+        output_dimension = int(payload["output_dimension"])
+        if input_dimension < 1 or output_dimension < 1:
+            raise ValueError("POD--NN checkpoint dimensions must be positive.")
         config = PODNNConfig(**payload["config"])
-        obj = cls(payload["input_dimension"], payload["output_dimension"], config)
-        obj.model.load_state_dict(payload["state_dict"])
+        config = replace(config, device=str(map_location))
+        obj = cls(input_dimension, output_dimension, config)
+        obj.model.load_state_dict(payload["state_dict"], strict=True)
         obj.history = TrainingHistory(**payload["history"])
         return obj

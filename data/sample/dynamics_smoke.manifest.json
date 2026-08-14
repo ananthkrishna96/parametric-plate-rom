@@ -17,7 +17,7 @@
   "trajectory_id_key": "trajectory_ids",
   "time_key": "times",
   "metric": "Euclidean smoke metric",
-  "sha256": null,
+  "sha256": "9a69a4650997370e570e11426be99454ac3e11c7e1b82cffc6de66a568a09219",
   "notes": "Synthetic complete trajectories; split trajectory IDs before flattening.",
   "metadata": {
     "n_trajectories": 20,

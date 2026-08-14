@@ -10,8 +10,10 @@ from pathlib import Path
 
 import numpy as np
 
+from paramplate.core.sampling import configured_parameter_ranges
 from paramplate.io.configuration import load_config, resolve_repo_path
 from paramplate.thermomechanical.fem import ThermomechanicalPlateFOM
+from paramplate.thermomechanical.model import parameter_ranges
 from paramplate.thermomechanical.snapshots import case_lhs, generate_case_archive
 from paramplate.workflows import thermomechanical_config
 
@@ -33,6 +35,7 @@ def main() -> int:
     config = thermomechanical_config(raw)
     sampling = raw.get("sampling", {})
     selected_case = int(args.case if args.case is not None else raw.get("case", 2))
+    ranges = configured_parameter_ranges(sampling, parameter_ranges(selected_case))
     requested_samples = int(
         sampling.get("requested_samples", sampling.get("n_samples", 6))
     )
@@ -44,6 +47,7 @@ def main() -> int:
                     "mode": raw["mode"],
                     "case": selected_case,
                     "requested_samples": requested_samples,
+                    "sampling_ranges": [item.to_dict() for item in ranges],
                     "config": asdict(config),
                 },
                 indent=2,
@@ -57,6 +61,7 @@ def main() -> int:
             selected_case,
             requested_samples,
             seed=int(sampling.get("seed", 100)),
+            ranges=ranges,
         )
         target = (
             output

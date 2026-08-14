@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "paramplate"
 version = "0.2.0"
-description = "Finite-element and reduced-order workflows for parameterized orthotropic Kirchhoff--Love plates"
+description = "Finite-element and reduced-order workflows for parameterized orthotropic Kirchhoff–Love plates"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
@@ -35,7 +35,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-neural = ["torch>=2.0"]
+neural = ["torch>=2.10"]
 test = ["pytest>=8.0"]
 
 [project.scripts]
@@ -53,3 +53,7 @@ markers = [
   "fenics: requires FEniCS/DOLFIN 2019.1.0 and mshr",
   "slow: comparatively expensive local test"
 ]
+
+[project.urls]
+Repository = "https://github.com/ananthkrishna96/parametric-plate-rom"
+Issues = "https://github.com/ananthkrishna96/parametric-plate-rom/issues"

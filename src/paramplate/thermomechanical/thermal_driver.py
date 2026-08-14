@@ -47,7 +47,11 @@ def centered_first_moment_samples(
         raise ValueError("thickness must be positive.")
     if coordinates[0] < -0.5 * h - 1e-12 or coordinates[-1] > 0.5 * h + 1e-12:
         raise ValueError("z coordinates must lie in the centered plate thickness.")
-    return 12.0 * np.trapezoid(values * coordinates, coordinates, axis=-1) / h**3
+    if hasattr(np, "trapezoid"):
+        integral = np.trapezoid(values * coordinates, coordinates, axis=-1)
+    else:  # NumPy 1.x compatibility
+        integral = np.trapz(values * coordinates, coordinates, axis=-1)
+    return 12.0 * integral / h**3
 
 
 def thermal_bending_moments(

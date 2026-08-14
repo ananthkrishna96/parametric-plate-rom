@@ -10,8 +10,10 @@ from pathlib import Path
 
 import numpy as np
 
+from paramplate.core.sampling import configured_parameter_ranges
 from paramplate.io.configuration import load_config, resolve_repo_path
 from paramplate.mechanical.fem import MechanicalPlateFOM
+from paramplate.mechanical.model import direct_parameter_ranges
 from paramplate.mechanical.navier import solve_ssss_navier
 from paramplate.mechanical.snapshots import direct_lhs, generate_snapshot_archive
 from paramplate.postprocessing import save_field_image
@@ -27,19 +29,48 @@ def main() -> int:
     args = parser.parse_args()
     raw = load_config(args.config, expected_study="mechanical")
     config = mechanical_config(raw)
+    sampling = raw.get("sampling", {})
+    ranges = configured_parameter_ranges(
+        sampling,
+        direct_parameter_ranges(),
+        aliases={"ks": "foundation_stiffness", "q": "load_amplitude"},
+    )
     if args.dry_run:
-        print(json.dumps({"study": "mechanical", "mode": raw["mode"], "config": asdict(config)}, indent=2, default=str))
+        print(
+            json.dumps(
+                {
+                    "study": "mechanical",
+                    "mode": raw["mode"],
+                    "sampling_ranges": [item.to_dict() for item in ranges],
+                    "config": asdict(config),
+                },
+                indent=2,
+                default=str,
+            )
+        )
         return 0
     output = args.output or resolve_repo_path(raw.get("output", "results/mechanical"))
     output.parent.mkdir(parents=True, exist_ok=True)
     if args.action == "navier":
+        if config.geometry.n_panels != 1:
+            raise ValueError("The Navier reference requires a monolithic plate configuration.")
+        if config.boundary_condition != "simply_supported":
+            raise ValueError("The Navier reference requires simply supported exterior edges.")
+        if config.fixed_foundation_factor is None:
+            raise ValueError(
+                "The Navier reference requires a prescribed linear foundation factor."
+            )
+        if config.load.kind not in {"uniform", "patch"}:
+            raise ValueError("The Navier reference supports uniform or patch loading.")
         solution = solve_ssss_navier(
             config.rigidity,
             length=config.geometry.length,
             width=config.geometry.width,
-            foundation_stiffness=config.foundation.stiffness,
+            foundation_stiffness=(
+                config.foundation.stiffness * float(config.fixed_foundation_factor)
+            ),
             load_amplitude=config.load.amplitude,
-            load=config.load.kind if config.load.kind in {"uniform", "patch"} else "patch",
+            load=config.load.kind,
             patch=(config.load.x0, config.load.y0, config.load.size_x, config.load.size_y),
             n_terms=int(raw.get("verification", {}).get("navier_terms", 21)),
             nx=81,
@@ -59,8 +90,8 @@ def main() -> int:
         print(target)
         return 0
     if args.action == "snapshots":
-        count = int(raw.get("sampling", {}).get("n_samples", 8))
-        samples = direct_lhs(count, seed=int(raw.get("sampling", {}).get("seed", 100)))
+        count = int(sampling.get("n_samples", 8))
+        samples = direct_lhs(count, seed=int(sampling.get("seed", 100)), ranges=ranges)
         target = output if output.suffix == ".npz" else output / "mechanical_snapshots.npz"
         print(generate_snapshot_archive(config, samples, target))
         return 0

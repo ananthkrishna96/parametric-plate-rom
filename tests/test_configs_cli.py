@@ -51,6 +51,9 @@ def test_scripts_expose_help_and_dry_run_without_fenics() -> None:
         "scripts/mechanical/run_workflow.py",
         "scripts/thermomechanical/run_workflow.py",
         "scripts/dynamics/run_workflow.py",
+        "scripts/mechanical/run_verification.py",
+        "scripts/thermomechanical/run_verification.py",
+        "scripts/dynamics/run_verification.py",
         "scripts/common/run_rom.py",
         "scripts/common/show_capabilities.py",
     ]
@@ -85,6 +88,28 @@ def test_scripts_expose_help_and_dry_run_without_fenics() -> None:
     assert dynamics_payload["config"]["mechanical"]["geometry"]["n_vertical_interfaces"] == 1
     assert dynamics_payload["campaign"] == "case2_one_interface"
     assert dynamics_payload["requested_trajectories"] == 250
+
+    mechanical_verification = run(
+        "scripts/mechanical/run_verification.py",
+        "--config",
+        "configs/mechanical/verification_monolithic.yml",
+        "--dry-run",
+    )
+    assert json.loads(mechanical_verification.stdout)["mode"] == "navier"
+    thermo_verification = run(
+        "scripts/thermomechanical/run_verification.py",
+        "--config",
+        "configs/thermomechanical/verification_auxiliary_navier.yml",
+        "--dry-run",
+    )
+    assert json.loads(thermo_verification.stdout)["navier_terms"] == 159
+    dynamics_verification = run(
+        "scripts/dynamics/run_verification.py",
+        "--config",
+        "configs/dynamics/verification_base.yml",
+        "--dry-run",
+    )
+    assert json.loads(dynamics_verification.stdout)["n_modes"] == 8
 
 
 def test_dependency_light_examples_and_archive_cli() -> None:

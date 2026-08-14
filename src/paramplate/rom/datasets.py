@@ -36,7 +36,7 @@ class SnapshotDataset:
 
 
 def _strings(values: np.ndarray) -> tuple[str, ...]:
-    return tuple(str(x) for x in np.asarray(values, dtype=object).reshape(-1).tolist())
+    return tuple(str(x) for x in np.asarray(values).reshape(-1).tolist())
 
 
 def _first_present(files: set[str], candidates: tuple[str, ...], label: str) -> str:
@@ -51,12 +51,14 @@ def load_snapshot_dataset(
     *,
     study: str,
     output: str = "displacement",
+    allow_unsafe_pickle: bool = False,
 ) -> SnapshotDataset:
     """Load one active output while preserving complete-trajectory identifiers.
 
     The loader accepts both the cleaned repository schema and the current thesis
-    snapshot-export names.  It never combines displacement and thermal-driver
-    fields into one target.
+    snapshot-export names. It never combines displacement and thermal-driver
+    fields into one target. Pickle-backed arrays are rejected unless the caller
+    explicitly opts into loading a trusted legacy archive.
     """
 
     archive = Path(path).expanduser().resolve()
@@ -82,7 +84,7 @@ def load_snapshot_dataset(
         raise ValueError(
             "Thermomechanical archives expose separate displacement and thermal_driver outputs."
         )
-    with np.load(archive, allow_pickle=True) as data:
+    with np.load(archive, allow_pickle=bool(allow_unsafe_pickle)) as data:
         if normalized_study in {"thermomechanical", "thermo"}:
             if normalized_output in {"thermal_driver", "theta"}:
                 snapshot_key = _first_present(

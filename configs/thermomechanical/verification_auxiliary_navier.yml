@@ -1,0 +1,48 @@
+study: thermomechanical
+mode: full
+geometry:
+  length: 2.0
+  width: 1.0
+  thickness: 0.05
+  resolution: 64
+  degree: 2
+  n_vertical_interfaces: 0
+  n_horizontal_interfaces: 0
+rigidity: {Dx: 10000.0, Dy: 10000.0, Dxy: 3000.0, Ds: 3500.0}
+foundation: {stiffness: 1000.0, uplift_factor: 0.001}
+fixed_foundation_factor: 1.0
+load: {kind: uniform, amplitude: -10000.0, x0: 1.0, y0: 0.5, size_x: 0.35, size_y: 0.35}
+boundary_condition: simply_supported
+solver: {absolute: 1.0e-8, relative: 1.0e-8, maximum_iterations: 25}
+thermal:
+  ambient_temperature: 300.15
+  substrate_temperature: 297.15
+  reference_temperature: 314.600821
+  top_convection: 10.0
+  emissivity: 0.90
+  absorbed_solar_flux: 700.0
+  contact_conductance: 200.0
+  gap_conductance: 5.0
+  contact_transition: 50.0
+  conductivity_x: 0.35
+  conductivity_y: 0.35
+  conductivity_z: 0.35
+  thermal_expansion_x: 0.00013
+  thermal_expansion_y: 0.00013
+  density: 1050.0
+  radiation: true
+heat_discretization:
+  nx: 64
+  ny: 32
+  nz: 16
+  degree: 1
+  theta_degree: 3
+  theta_quadrature_points: 20
+coupling: {relaxation: 0.7, tolerance: 1.0e-6, maximum_iterations: 40}
+verification:
+  effective_foundation: 1000.0
+  navier_terms: 159
+  grid: {nx: 401, ny: 401}
+  projection_grid: {nx: 401, ny: 401}
+  thermal_driver_gradient: 18.0
+verification_output: results/thermomechanical/verification_auxiliary_navier

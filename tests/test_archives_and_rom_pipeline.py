@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 from paramplate.io.archives import validate_archive
+from paramplate.io.manifest import read_manifest, validate_manifest
 from paramplate.rom.datasets import load_snapshot_dataset
 from paramplate.rom.pipeline import prepare_rom_data
 from paramplate.rom.suite import run_rom
@@ -25,6 +26,15 @@ def test_bundled_archives_validate() -> None:
     assert dynamics["kind"] == "dynamics"
     assert dynamics["n_trajectories"] == 20
     assert dynamics["n_times"] == 11
+
+
+def test_bundled_manifests_match_archives() -> None:
+    manifests = sorted(SAMPLE.glob("*.manifest.json"))
+    assert len(manifests) == 4
+    for path in manifests:
+        manifest = read_manifest(path)
+        assert manifest.sha256 is not None
+        assert validate_manifest(manifest, archive_root=SAMPLE) == []
 
 
 def test_thermomechanical_outputs_remain_separate() -> None:

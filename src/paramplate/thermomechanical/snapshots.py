@@ -4,18 +4,29 @@ from __future__ import annotations
 
 from dataclasses import replace
 from pathlib import Path
+from typing import Sequence
 
 import numpy as np
 
-from paramplate.core.sampling import latin_hypercube
-from paramplate.io.manifest import DatasetManifest, write_manifest
+from paramplate.core.sampling import ParameterRange, latin_hypercube
+from paramplate.io.manifest import DatasetManifest, sha256_file, write_manifest
 
 from .fem import ThermomechanicalFEMConfig, ThermomechanicalPlateFOM
 from .model import CASES, parameter_mapping, parameter_ranges
 
 
-def case_lhs(case: int, n_samples: int, *, seed: int = 100) -> np.ndarray:
-    return latin_hypercube(parameter_ranges(case), int(n_samples), seed=seed)
+def case_lhs(
+    case: int,
+    n_samples: int,
+    *,
+    seed: int = 100,
+    ranges: Sequence[ParameterRange] | None = None,
+) -> np.ndarray:
+    declared = parameter_ranges(case) if ranges is None else tuple(ranges)
+    expected = CASES[int(case)].parameter_names
+    if tuple(spec.name for spec in declared) != expected:
+        raise ValueError(f"Thermomechanical case {case} ranges must follow {expected}.")
+    return latin_hypercube(declared, int(n_samples), seed=seed)
 
 
 def pack_coupling_histories(histories: list[np.ndarray]) -> tuple[np.ndarray, np.ndarray]:
@@ -135,6 +146,7 @@ def generate_case_archive(
             output_unit=unit,
             split_level="sample",
             metric="field-specific finite-element metric",
+            sha256=sha256_file(target),
             notes="Accepted converged coupled states only; displacement and theta remain separate outputs.",
             metadata={
                 "case": int(case),

@@ -42,6 +42,8 @@ class MechanicalFEMConfig:
     def __post_init__(self) -> None:
         if self.boundary_condition not in {"free_edge", "simply_supported"}:
             raise ValueError("boundary_condition must be free_edge or simply_supported.")
+        if self.fixed_foundation_factor is not None and self.fixed_foundation_factor < 0.0:
+            raise ValueError("fixed_foundation_factor must be nonnegative when supplied.")
 
 
 @dataclass(frozen=True)

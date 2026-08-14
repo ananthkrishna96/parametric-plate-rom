@@ -10,7 +10,9 @@ from pathlib import Path
 
 import numpy as np
 
+from paramplate.core.sampling import configured_parameter_ranges
 from paramplate.dynamics.fem import TransientPlateFOM
+from paramplate.dynamics.model import parameter_ranges
 from paramplate.dynamics.trajectories import campaign_lhs, generate_trajectory_archive
 from paramplate.io.configuration import load_config, resolve_repo_path
 from paramplate.workflows import transient_config
@@ -31,7 +33,9 @@ def main() -> int:
     raw = load_config(args.config, expected_study="dynamics")
     config = transient_config(raw)
     selected_campaign = str(args.campaign or raw.get("campaign", "case2_monolithic"))
-    requested_trajectories = int(raw.get("sampling", {}).get("n_trajectories", 4))
+    sampling = raw.get("sampling", {})
+    ranges = configured_parameter_ranges(sampling, parameter_ranges(selected_campaign))
+    requested_trajectories = int(sampling.get("n_trajectories", 4))
     if args.dry_run:
         print(
             json.dumps(
@@ -40,6 +44,7 @@ def main() -> int:
                     "mode": raw["mode"],
                     "campaign": selected_campaign,
                     "requested_trajectories": requested_trajectories,
+                    "sampling_ranges": [item.to_dict() for item in ranges],
                     "config": asdict(config),
                 },
                 indent=2,
@@ -52,7 +57,8 @@ def main() -> int:
         samples = campaign_lhs(
             selected_campaign,
             requested_trajectories,
-            seed=int(raw.get("sampling", {}).get("seed", 100)),
+            seed=int(sampling.get("seed", 100)),
+            ranges=ranges,
         )
         target = (
             output

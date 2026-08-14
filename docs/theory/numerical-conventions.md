@@ -24,4 +24,4 @@ One effective foundation branch is selected before a complete trajectory is adva
 
 ## Reduced outputs and metrics
 
-POD bases, preprocessors, and predictors are fitted only on training data. Static and steady outputs use their declared finite-element metrics. The transient workflow first performs an uncentered Euclidean SVD on training trajectories and then reorthonormalizes the retained displacement modes in the finite-element metric. POD--Proj is a compression diagnostic requiring an available full-order field; it is not a predictive online method.
+POD bases, preprocessors, and predictors are fitted only on training data. Static and steady outputs use their declared finite-element metrics. The transient workflow first performs an uncentered Euclidean SVD on training trajectories and then reorthonormalizes the retained displacement modes in the finite-element metric. POD–Proj is a compression diagnostic requiring an available full-order field; it is not a predictive online method.

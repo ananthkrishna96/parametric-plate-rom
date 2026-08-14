@@ -17,6 +17,3 @@ dependencies:
   - pyyaml
   - joblib
   - pytest
-  - pip
-  - pip:
-      - torch

@@ -17,15 +17,15 @@ The held-out test subset is evaluated only after model selection.
 
 `compute_metric_pod` implements uncentered or centered POD in a declared coefficient metric. Static and thermomechanical workflow configurations use uncentered bases. `compute_transient_pod` follows the transient campaign path: training-only Euclidean SVD followed by reorthonormalization of the retained modes in the finite-element displacement metric.
 
-POD--Proj reconstructs an available full-order field and reports compression error. It is never presented as a predictive model.
+POD–Proj reconstructs an available full-order field and reports compression error. It is never presented as a predictive model.
 
 ## Predictive methods
 
-- **PODI--RBF:** thin-plate-spline coordinate interpolation; the transient setup uses local neighborhoods of 96 and smoothing `1e-10`.
-- **PODI--Linear:** Delaunay/linear interpolation with nearest-neighbor fallback outside the convex hull; the transient fit can use a maximin trajectory subset of at most 2500 state queries.
-- **POD--GPR:** one Gaussian process per retained coordinate; the transient setup uses a Matérn-5/2 kernel and a maximin limit of 1200 training queries.
-- **POD--NN:** coefficient-only `128/96/64` ELU network with linear output.
-- **POD--DL-ROM:** a coefficient autoencoder and parameter-to-latent map for steady fields; the transient version uses the executed raw, normalized, logarithmic, polynomial-time, and harmonic feature map with a `192/160/128` SiLU network, layer normalization, and dropout `0.02`.
+- **PODI–RBF:** thin-plate-spline coordinate interpolation; the transient setup uses local neighborhoods of 96 and smoothing `1e-10`.
+- **PODI–Linear:** Delaunay/linear interpolation with nearest-neighbor fallback outside the convex hull; the transient fit can use a maximin trajectory subset of at most 2500 state queries.
+- **POD–GPR:** one Gaussian process per retained coordinate; the transient setup uses a Matérn-5/2 kernel and a maximin limit of 1200 training queries.
+- **POD–NN:** coefficient-only `128/96/64` ELU network with linear output.
+- **POD–DL-ROM:** a coefficient autoencoder and parameter-to-latent map for steady fields; the transient version uses the executed raw, normalized, logarithmic, polynomial-time, and harmonic feature map with a `192/160/128` SiLU network, layer normalization, and dropout `0.02`.
 - **DL-ROM:** field-specific direct autoencoder and parameter-to-latent map for steady thermomechanical outputs only.
 
 Neural artifacts are generated outputs and are excluded from Git by default.

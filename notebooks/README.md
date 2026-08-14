@@ -1,3 +1,3 @@
 # Notebooks
 
-The implementation notebooks used during the research are not the primary software interface. Their active algorithms have been migrated to `src/paramplate/`, `scripts/`, and `configs/`. This directory is retained only as an architectural placeholder for future analysis notebooks that call the package rather than redefine its solvers.
+The research notebooks are not distributed as the primary software interface. Their active algorithms are maintained in `src/paramplate/`, with executable drivers in `scripts/` and experiment definitions in `configs/`. Any future analysis notebook should import the package rather than redefine the solvers.

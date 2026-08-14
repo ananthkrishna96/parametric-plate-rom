@@ -8,7 +8,7 @@ from pathlib import Path
 
 import numpy as np
 
-from paramplate.io.manifest import DatasetManifest, write_manifest
+from paramplate.io.manifest import DatasetManifest, sha256_file, write_manifest
 
 
 def _spatial_basis(nx: int = 12, ny: int = 8) -> np.ndarray:
@@ -64,6 +64,7 @@ def _mechanical(path: Path, basis: np.ndarray, seed: int) -> None:
             split_level="sample",
             expected_shape=snapshots.shape,
             metric="Euclidean smoke metric",
+            sha256=sha256_file(path),
             notes="Synthetic low-rank fields for software-path checks only.",
         ),
         path.with_suffix(".manifest.json"),
@@ -116,6 +117,7 @@ def _thermomechanical(path: Path, basis: np.ndarray, seed: int) -> None:
                 split_level="sample",
                 expected_shape=(displacement if output == "displacement" else theta).shape,
                 metric="field-specific Euclidean smoke metric",
+                sha256=sha256_file(path),
                 notes="Synthetic one-field ROM data from matched sample assignments.",
             ),
             path.with_name(f"{path.stem}.{output}.manifest.json"),
@@ -175,6 +177,7 @@ def _dynamics(path: Path, basis: np.ndarray, seed: int) -> None:
             trajectory_id_key="trajectory_ids",
             time_key="times",
             metric="Euclidean smoke metric",
+            sha256=sha256_file(path),
             notes="Synthetic complete trajectories; split trajectory IDs before flattening.",
             metadata={"n_trajectories": n_trajectories, "states_per_trajectory": len(times)},
         ),

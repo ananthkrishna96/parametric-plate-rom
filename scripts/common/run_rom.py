@@ -29,7 +29,7 @@ def main() -> int:
     parser.add_argument("--options", type=Path, help="Optional JSON method options")
     parser.add_argument("--report", type=Path)
     args = parser.parse_args()
-    metric = np.load(args.metric) if args.metric else None
+    metric = np.load(args.metric, allow_pickle=False) if args.metric else None
     options = json.loads(args.options.read_text(encoding="utf-8")) if args.options else {}
     dataset = load_snapshot_dataset(args.archive, study=args.study, output=args.output_field)
     result = run_rom(

@@ -1,0 +1,4 @@
+base_config: verification_base.yml
+geometry:
+  n_vertical_interfaces: 1
+  n_horizontal_interfaces: 0

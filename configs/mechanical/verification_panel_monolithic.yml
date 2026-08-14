@@ -1,0 +1,4 @@
+study: mechanical
+mode: full
+base_config: configs/mechanical/verification_panel_base.yml
+geometry: {n_vertical_interfaces: 0, n_horizontal_interfaces: 0}
