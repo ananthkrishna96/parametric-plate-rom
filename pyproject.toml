@@ -4,39 +4,43 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "paramplate"
-version = "0.1.0"
-description = "Parameterized plate finite-element and reduced-order modelling framework"
+version = "0.2.0"
+description = "Finite-element and reduced-order workflows for parameterized orthotropic Kirchhoff--Love plates"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
-    { name = "Anantha Krishnan O M" }
+  { name = "Anantha Krishnan Orunnukaran Mani" }
 ]
 keywords = [
-    "Kirchhoff-Love plates",
-    "finite element method",
-    "C0 interior penalty",
-    "reduced order modelling",
-    "POD",
-    "thermomechanics",
-    "orthotropic plates"
+  "Kirchhoff-Love plates",
+  "C0 interior-penalty Galerkin",
+  "finite elements",
+  "proper orthogonal decomposition",
+  "reduced-order models",
+  "thermomechanics",
+  "transient dynamics"
 ]
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "Intended Audience :: Science/Research",
-    "Topic :: Scientific/Engineering"
+  "Programming Language :: Python :: 3",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering"
+]
+dependencies = [
+  "numpy>=1.24",
+  "scipy>=1.10",
+  "matplotlib>=3.7",
+  "scikit-learn>=1.3",
+  "pyyaml>=6.0",
+  "joblib>=1.3"
 ]
 
-dependencies = [
-    "numpy",
-    "scipy",
-    "pandas",
-    "matplotlib",
-    "scikit-learn",
-    "tqdm",
-    "pyyaml",
-    "joblib",
-    "tabulate"
-]
+[project.optional-dependencies]
+neural = ["torch>=2.0"]
+test = ["pytest>=8.0"]
+
+[project.scripts]
+paramplate-validate-archive = "paramplate.io.archives:main"
+paramplate-inspect-environment = "paramplate.io.environment:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -44,3 +48,8 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+addopts = "-ra"
+markers = [
+  "fenics: requires FEniCS/DOLFIN 2019.1.0 and mshr",
+  "slow: comparatively expensive local test"
+]

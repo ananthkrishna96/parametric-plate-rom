@@ -1,0 +1,16 @@
+study: thermomechanical
+mode: thesis
+base_config: configs/thermomechanical/thesis_base.yml
+case: 3
+sampling:
+  design: latin_hypercube
+  requested_samples: 379
+  accepted_samples: 378
+  rejected_nonconverged: 1
+  seed: 100
+  ranges:
+    foundation_stiffness: [100000.0, 2000000.0, log]
+    ambient_temperature: [298.15, 313.15]
+    substrate_temperature: [295.15, 310.15]
+data_partition: {train: 302, validation: 38, test: 38}
+rom: {displacement_rank: 6, thermal_driver_rank: 4}

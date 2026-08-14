@@ -1,0 +1,31 @@
+study: thermomechanical
+mode: thesis
+geometry: {length: 2.0, width: 1.0, thickness: 0.05, resolution: 64, degree: 2, n_vertical_interfaces: 0, n_horizontal_interfaces: 0}
+rigidity: {Dx: 9500.0, Dy: 9500.0, Dxy: 2850.0, Ds: 3320.0}
+foundation: {stiffness: 500000.0, uplift_factor: 0.001}
+load: {kind: patch, amplitude: -3500.0, x0: 1.0, y0: 0.5, size_x: 0.351, size_y: 0.351}
+boundary_condition: free_edge
+solver: {absolute: 1.0e-8, relative: 1.0e-8, maximum_iterations: 25}
+thermal:
+  ambient_temperature: 305.15
+  substrate_temperature: 298.15
+  reference_temperature: 293.15
+  top_convection: 10.0
+  emissivity: 0.90
+  absorbed_solar_flux: 700.0
+  contact_conductance: 200.0
+  gap_conductance: 5.0
+  contact_transition: 50.0
+  conductivity_x: 0.35
+  conductivity_y: 0.35
+  conductivity_z: 0.35
+  thermal_expansion_x: 0.00013
+  thermal_expansion_y: 0.00013
+heat_discretization: {nx: 64, ny: 32, nz: 16, degree: 1, theta_degree: 1, theta_quadrature_points: 20}
+coupling: {relaxation: 0.7, tolerance: 1.0e-5, maximum_iterations: 25}
+rom:
+  split: {train: 0.8, validation: 0.1, test: 0.1, seed_train: 100, seed_holdout: 101}
+  displacement_rank: 6
+  thermal_driver_rank: 4
+  active_methods: [hybrid-pod-galerkin, pod-proj, podi-rbf, podi-linear, pod-gpr, pod-nn, pod-dl-rom, dl-rom]
+output: results/thermomechanical/thesis

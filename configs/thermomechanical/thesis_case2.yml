@@ -1,0 +1,14 @@
+study: thermomechanical
+mode: thesis
+base_config: configs/thermomechanical/thesis_base.yml
+case: 2
+sampling:
+  design: latin_hypercube
+  requested_samples: 450
+  accepted_samples: 450
+  seed: 100
+  ranges:
+    load_amplitude: [-6500.0, -1500.0]
+    absorbed_solar_flux: [150.0, 850.0]
+data_partition: {train: 360, validation: 45, test: 45}
+rom: {displacement_rank: 6, thermal_driver_rank: 4}

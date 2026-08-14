@@ -1,0 +1,9 @@
+study: dynamics
+mode: thesis
+base_config: configs/dynamics/thesis_base.yml
+campaign: case2_one_interface
+geometry: {n_vertical_interfaces: 1, n_horizontal_interfaces: 0}
+sampling: {n_trajectories: 250, seed: 100, load_amplitude: [2000.0, 10000.0]}
+data_partition: {train_trajectories: 200, validation_trajectories: 25, test_trajectories: 25}
+stored_states_per_trajectory: 41
+rom: {rank: 8, input: [load_amplitude, time]}

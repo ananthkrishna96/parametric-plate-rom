@@ -1,0 +1,17 @@
+study: mechanical
+mode: thesis
+geometry:
+  length: 2.0
+  width: 1.0
+  thickness: 0.05
+  resolution: 64
+  degree: 2
+  n_vertical_interfaces: 1
+  n_horizontal_interfaces: 0
+rigidity: {Dx: 9500.0, Dy: 9500.0, Dxy: 2850.0, Ds: 3320.0}
+foundation: {stiffness: 10000000.0, uplift_factor: 0.001}
+load: {kind: patch, amplitude: -7000.0, x0: 1.0, y0: 0.5, size_x: 0.351, size_y: 0.351}
+boundary_condition: free_edge
+solver: {absolute: 1.0e-8, relative: 1.0e-8, maximum_iterations: 25}
+sampling: {n_samples: 300, seed: 100}
+output: results/mechanical/thesis_panel

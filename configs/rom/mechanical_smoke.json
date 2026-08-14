@@ -1,0 +1,1 @@
+{"smoothing": 1e-10, "neighbors": 16, "optimizer_restarts": 0, "fit_limit": 64, "maximum_epochs": 20, "patience": 5, "device": "cpu"}

@@ -1,0 +1,11 @@
+{
+  "smoothing": 1e-10,
+  "neighbors": 96,
+  "linear_fit_limit": 2500,
+  "gpr_fit_limit": 1200,
+  "kernel": "matern52",
+  "alpha": 1e-9,
+  "optimizer_restarts": 2,
+  "seed": 100,
+  "device": "cpu"
+}

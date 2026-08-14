@@ -1,0 +1,22 @@
+# Reference high-fidelity environment. FEniCS 2019.1.0 availability depends on
+# platform and channel state; the thesis runs used an explicitly recorded legacy
+# DOLFIN/UFL/PETSc environment rather than a generic pip installation.
+name: paramplate-fenics-2019
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - fenics=2019.1.0
+  - mshr
+  - petsc4py
+  - mpi4py
+  - numpy
+  - scipy
+  - matplotlib
+  - scikit-learn
+  - pyyaml
+  - joblib
+  - pytest
+  - pip
+  - pip:
+      - torch

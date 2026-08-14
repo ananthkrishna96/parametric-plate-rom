@@ -1,0 +1,12 @@
+study: dynamics
+mode: thesis
+base_config: configs/dynamics/thesis_base.yml
+campaign: case3_monolithic
+sampling:
+  n_trajectories: 250
+  seed: 100
+  Dx: [4000.0, 14000.0]
+  load_amplitude: [2000.0, 10000.0]
+data_partition: {train_trajectories: 200, validation_trajectories: 25, test_trajectories: 25}
+stored_states_per_trajectory: 41
+rom: {rank: 8, input: [Dx, load_amplitude, time]}

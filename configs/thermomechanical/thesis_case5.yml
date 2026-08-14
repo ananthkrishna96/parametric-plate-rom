@@ -1,0 +1,17 @@
+study: thermomechanical
+mode: thesis
+base_config: configs/thermomechanical/thesis_base.yml
+case: 5
+sampling:
+  design: latin_hypercube
+  requested_samples: 500
+  accepted_samples: 500
+  seed: 100
+  ranges:
+    foundation_stiffness: [100000.0, 3000000.0, log]
+    load_amplitude: [-9000.0, -2000.0]
+    absorbed_solar_flux: [150.0, 850.0]
+    contact_conductance: [75.0, 300.0, log]
+    gap_conductance: [3.0, 15.0, log]
+data_partition: {train: 400, validation: 50, test: 50}
+rom: {displacement_rank: 6, thermal_driver_rank: 4}

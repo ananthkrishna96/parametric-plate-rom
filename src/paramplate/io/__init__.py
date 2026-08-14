@@ -1,16 +1,14 @@
-"""Input/output helpers for external research data."""
+"""Configuration, external-data, manifest, and archive utilities."""
 
+from .configuration import load_config, resolve_repo_path
 from .data_locations import DataLocations, load_data_locations
-from .snapshot_archives import SnapshotArchiveInfo, summarize_snapshot_archive, detect_archive_kind
-from .snapshot_manifest import build_snapshot_manifest, project2_final_archives, paper1_archives
+from .manifest import DatasetManifest, validate_manifest
 
 __all__ = [
     "DataLocations",
+    "DatasetManifest",
+    "load_config",
     "load_data_locations",
-    "SnapshotArchiveInfo",
-    "summarize_snapshot_archive",
-    "detect_archive_kind",
-    "build_snapshot_manifest",
-    "project2_final_archives",
-    "paper1_archives",
+    "resolve_repo_path",
+    "validate_manifest",
 ]

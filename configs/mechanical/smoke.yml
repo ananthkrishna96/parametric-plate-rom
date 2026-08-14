@@ -1,0 +1,20 @@
+study: mechanical
+mode: smoke
+geometry:
+  length: 2.0
+  width: 1.0
+  thickness: 0.05
+  resolution: 8
+  degree: 2
+  n_vertical_interfaces: 0
+  n_horizontal_interfaces: 0
+rigidity: {Dx: 9500.0, Dy: 9500.0, Dxy: 2850.0, Ds: 3320.0}
+foundation: {stiffness: 1000.0, uplift_factor: 0.001}
+load:
+  kind: uniform
+  amplitude: -1000.0
+boundary_condition: simply_supported
+solver: {absolute: 1.0e-8, relative: 1.0e-8, maximum_iterations: 25}
+verification: {navier_terms: 21}
+sampling: {n_samples: 8, seed: 100}
+output: results/mechanical/smoke

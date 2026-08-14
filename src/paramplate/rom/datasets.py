@@ -1,105 +1,143 @@
-"""ROM dataset abstraction for Paper-1 and Project-2 snapshot archives."""
+"""Field-aware views of mechanical, thermomechanical, and transient archives."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterator, Optional
 
 import numpy as np
 
-from paramplate.io.data_locations import DataLocations, load_data_locations
-from paramplate.io.snapshot_archives import (
-    SnapshotArchiveInfo,
-    load_npz_metadata,
-    summarize_snapshot_archive,
-)
-from paramplate.io.snapshot_manifest import paper1_archives, project2_final_archives
+from paramplate.io.archives import archive_keys
 
 
-@dataclass
-class ROMDataset:
-    """Standard in-memory representation of one ROM training archive."""
-
-    source_path: Path
-    project: str
+@dataclass(frozen=True)
+class SnapshotDataset:
+    source: Path
+    study: str
+    output_name: str
     parameters: np.ndarray
     snapshots: np.ndarray
-    theta_snapshots: Optional[np.ndarray] = None
-    metadata: dict[str, Any] | None = None
-    info: SnapshotArchiveInfo | None = None
+    parameter_names: tuple[str, ...]
+    output_unit: str
+    trajectory_ids: np.ndarray | None = None
+    times: np.ndarray | None = None
 
     @property
-    def n_samples(self) -> int:
-        return int(self.parameters.shape[0])
+    def n_rows(self) -> int:
+        return int(self.snapshots.shape[0])
 
     @property
     def n_dofs(self) -> int:
-        return int(self.snapshots.shape[1]) if self.snapshots.ndim >= 2 else int(self.snapshots.shape[0])
+        return int(self.snapshots.shape[1])
 
     @property
-    def has_theta(self) -> bool:
-        return self.theta_snapshots is not None
+    def is_trajectory_dataset(self) -> bool:
+        return self.trajectory_ids is not None
 
 
-def load_rom_dataset(path: str | Path, *, load_theta: bool = True) -> ROMDataset:
-    """Load one Paper-1 or Paper-2 archive as a :class:`ROMDataset`.
+def _strings(values: np.ndarray) -> tuple[str, ...]:
+    return tuple(str(x) for x in np.asarray(values, dtype=object).reshape(-1).tolist())
 
-    This function reads the large snapshot arrays into memory.  For lightweight
-    checks, use ``summarize_snapshot_archive`` instead.
+
+def _first_present(files: set[str], candidates: tuple[str, ...], label: str) -> str:
+    for key in candidates:
+        if key in files:
+            return key
+    raise KeyError(f"None of the supported {label} keys are present: {candidates}.")
+
+
+def load_snapshot_dataset(
+    path: str | Path,
+    *,
+    study: str,
+    output: str = "displacement",
+) -> SnapshotDataset:
+    """Load one active output while preserving complete-trajectory identifiers.
+
+    The loader accepts both the cleaned repository schema and the current thesis
+    snapshot-export names.  It never combines displacement and thermal-driver
+    fields into one target.
     """
 
-    p = Path(path).expanduser().resolve()
-    info = summarize_snapshot_archive(p)
-    if info.parameter_key is None or info.snapshot_key is None:
-        raise ValueError(f"Cannot identify parameter/snapshot arrays in {p}. Keys: {info.keys}")
+    archive = Path(path).expanduser().resolve()
+    keys = set(archive_keys(archive))
+    normalized_study = study.lower().strip()
+    normalized_output = output.lower().strip()
+    supported_studies = {"mechanical", "thermomechanical", "thermo", "dynamics", "transient"}
+    if normalized_study not in supported_studies:
+        raise ValueError(
+            f"Unsupported study {study!r}; expected mechanical, thermomechanical, or dynamics."
+        )
+    if normalized_study in {"mechanical", "dynamics", "transient"} and normalized_output not in {
+        "displacement",
+        "w",
+    }:
+        raise ValueError(f"{normalized_study} archives expose displacement as the only reduced output.")
+    if normalized_study in {"thermomechanical", "thermo"} and normalized_output not in {
+        "displacement",
+        "w",
+        "thermal_driver",
+        "theta",
+    }:
+        raise ValueError(
+            "Thermomechanical archives expose separate displacement and thermal_driver outputs."
+        )
+    with np.load(archive, allow_pickle=True) as data:
+        if normalized_study in {"thermomechanical", "thermo"}:
+            if normalized_output in {"thermal_driver", "theta"}:
+                snapshot_key = _first_present(
+                    keys,
+                    ("thermal_driver_snapshots", "theta_snapshots", "theta", "T1_snapshots"),
+                    "thermal-driver snapshot",
+                )
+                unit = "K/m"
+            else:
+                snapshot_key = _first_present(
+                    keys,
+                    ("displacement_snapshots", "snapshots", "fom_snapshots", "w_snapshots"),
+                    "displacement snapshot",
+                )
+                unit = "m"
+        elif normalized_study in {"dynamics", "transient"}:
+            snapshot_key = _first_present(keys, ("snapshots", "fom_snapshots"), "transient snapshot")
+            unit = "m"
+        else:
+            snapshot_key = _first_present(keys, ("snapshots", "fom_snapshots"), "mechanical snapshot")
+            unit = "m"
 
-    with np.load(p, allow_pickle=True) as z:
-        parameters = np.asarray(z[info.parameter_key])
-        snapshots = np.asarray(z[info.snapshot_key])
-        theta = None
-        if load_theta and info.theta_key is not None:
-            theta = np.asarray(z[info.theta_key])
+        parameter_key = _first_present(
+            keys,
+            ("query_parameters", "parameters", "parameters_flat"),
+            "parameter",
+        )
+        snapshots = np.asarray(data[snapshot_key], dtype=float)
+        parameters = np.asarray(data[parameter_key], dtype=float)
+        names = (
+            _strings(data["parameter_names"])
+            if "parameter_names" in data.files
+            else tuple(f"mu_{j}" for j in range(parameters.shape[1]))
+        )
+        trajectory_ids = None
+        for candidate in ("trajectory_ids", "trajectory_ids_flat"):
+            if candidate in data.files:
+                trajectory_ids = np.asarray(data[candidate], dtype=int).reshape(-1)
+                break
+        times = np.asarray(data["times"], dtype=float) if "times" in data.files else None
 
-    metadata = load_npz_metadata(p)
-    return ROMDataset(
-        source_path=p,
-        project=info.project,
+    if snapshots.ndim > 2 and normalized_study in {"dynamics", "transient"}:
+        snapshots = snapshots.reshape(-1, snapshots.shape[-1])
+    if snapshots.ndim != 2 or parameters.ndim != 2 or len(snapshots) != len(parameters):
+        raise ValueError("Archive parameters and selected snapshots must be aligned two-dimensional arrays.")
+    if trajectory_ids is not None and len(trajectory_ids) != len(snapshots):
+        raise ValueError("Trajectory identifiers are not aligned with flattened snapshot rows.")
+    return SnapshotDataset(
+        source=archive,
+        study=normalized_study,
+        output_name="thermal_driver" if normalized_output in {"thermal_driver", "theta"} else "displacement",
         parameters=parameters,
         snapshots=snapshots,
-        theta_snapshots=theta,
-        metadata=metadata,
-        info=info,
+        parameter_names=names,
+        output_unit=unit,
+        trajectory_ids=trajectory_ids,
+        times=times,
     )
-
-
-def iter_project2_archive_infos(locations: DataLocations | None = None) -> Iterator[SnapshotArchiveInfo]:
-    """Yield summaries for all Project-2 final archives."""
-
-    loc = locations or load_data_locations()
-    for p in project2_final_archives(loc):
-        yield summarize_snapshot_archive(p)
-
-
-def iter_paper1_archive_infos(locations: DataLocations | None = None) -> Iterator[SnapshotArchiveInfo]:
-    """Yield summaries for all Paper-1 archive candidates."""
-
-    loc = locations or load_data_locations()
-    for p in paper1_archives(loc):
-        yield summarize_snapshot_archive(p)
-
-
-def load_project2_dataset_by_name(
-    name_contains: str,
-    *,
-    locations: DataLocations | None = None,
-    load_theta: bool = True,
-) -> ROMDataset:
-    """Load the first Project-2 archive whose parent folder contains text."""
-
-    loc = locations or load_data_locations()
-    needle = str(name_contains).lower()
-    for p in project2_final_archives(loc):
-        if needle in p.parent.name.lower() or needle in p.name.lower():
-            return load_rom_dataset(p, load_theta=load_theta)
-    raise FileNotFoundError(f"No Project-2 archive matching {name_contains!r} found in {loc.paper2_baseline_root}")

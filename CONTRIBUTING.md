@@ -1,13 +1,13 @@
 # Contributing
 
-This repository is currently maintained as research software associated with an ongoing thesis/paper workflow.
+Changes should preserve the scientific distinction between the full-order state and the reduced output. In particular, the thermomechanical FOM remains coupled although its predictive ROMs are field-specific, and the transient predictors are time-conditioned field surrogates rather than reduced time integrators.
 
-Before contributing, please open an issue or contact the maintainer to discuss the proposed change.
+Before submitting a change:
 
-## Development principles
+1. add or update a focused test;
+2. run `python -m compileall -q src scripts examples` and `pytest -q`;
+3. keep large snapshots, meshes, checkpoints, and generated result folders outside Git;
+4. document any FEniCS/DOLFIN test that could not be executed;
+5. avoid changing sign conventions, units, split roles, or method names without updating the corresponding workflow documentation and configurations.
 
-- Keep reusable implementation inside `src/paramplate/`.
-- Keep notebooks as reproducibility or demonstration material, not as the primary source code.
-- Do not commit large generated simulation data, logs, or machine-specific paths.
-- Keep examples lightweight and reproducible.
-- Document numerical assumptions, parameter choices, and solver settings clearly.
+The repository license is not yet finalized. External contributions should not be merged until that status is resolved.

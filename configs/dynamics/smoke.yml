@@ -1,0 +1,18 @@
+study: dynamics
+mode: smoke
+geometry: {length: 2.0, width: 1.0, thickness: 0.05, resolution: 8, degree: 2, n_vertical_interfaces: 0, n_horizontal_interfaces: 0}
+rigidity: {Dx: 6000.0, Dy: 6000.0, Dxy: 1800.0, Ds: 2100.0}
+foundation: {stiffness: 500000.0, uplift_factor: 0.001, dynamic_branch: compression}
+load: {kind: patch, amplitude: -5000.0, x0: 1.0, y0: 0.5, size_x: 0.351, size_y: 0.351}
+boundary_condition: free_edge
+solver: {absolute: 1.0e-8, relative: 1.0e-8, maximum_iterations: 25}
+dynamics:
+  density: 1200.0
+  foundation_branch: compression
+  final_time: 0.02
+  time_step: 0.001
+  store_every: 5
+  rayleigh: {alpha_M: 0.0, alpha_K: 0.0}
+sampling: {n_trajectories: 3, seed: 100}
+verification: {n_modes: 4}
+output: results/dynamics/smoke

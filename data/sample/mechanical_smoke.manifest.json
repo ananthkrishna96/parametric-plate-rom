@@ -1,0 +1,27 @@
+{
+  "study": "mechanical",
+  "archive": "mechanical_smoke.npz",
+  "snapshot_key": "snapshots",
+  "parameter_key": "parameters",
+  "parameter_names": [
+    "Dx",
+    "Dy",
+    "Dxy",
+    "Ds",
+    "ks",
+    "q"
+  ],
+  "output_name": "displacement",
+  "output_unit": "m",
+  "split_level": "sample",
+  "expected_shape": [
+    60,
+    96
+  ],
+  "trajectory_id_key": null,
+  "time_key": null,
+  "metric": "Euclidean smoke metric",
+  "sha256": null,
+  "notes": "Synthetic low-rank fields for software-path checks only.",
+  "metadata": {}
+}

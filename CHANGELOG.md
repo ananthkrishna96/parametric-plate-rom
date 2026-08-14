@@ -1,22 +1,16 @@
 # Changelog
 
-## [0.1.0] - Unreleased
+## 0.2.0 (unreleased working tree)
 
-### Added
+- Reorganized the package around static mechanics, steady thermomechanics, and transient dynamics.
+- Migrated the active notebook algorithms into reusable modules, command-line drivers, configurations, and tests.
+- Added metric-aware POD, trajectory-safe splitting, interpolation, Gaussian-process, neural, POD--DL-ROM, and direct DL-ROM components.
+- Added real FEniCS/DOLFIN code paths for the three full-order workflows, with imports kept optional for ROM-only use.
+- Added external-data manifests and archive validation for thermomechanical snapshots and transient trajectories.
+- Removed the former single-study public framing, obsolete method aliases, local machine paths, generated caches, and internal review material.
 
-- Initial professional repository skeleton.
-- Package layout for mechanical, thermomechanical, dynamic, snapshot-generation, and ROM extensions.
-- Project-2 legacy-safe solver preservation milestone (`v0.1-project2-legacy-safe`).
-- Project-2 snapshot-generation migration milestone (`v0.2-project2-snapgen-safe`).
-- External ROM data loader and snapshot archive discovery (`v0.3-rom-data-loader-safe`).
-- Project-2 POD preprocessing workflow (`v0.4-project2-pod-preprocessing-safe`).
-- Intrusive/non-intrusive ROM suite architecture (`v0.5-project2-rom-suite-architecture-safe`).
-- Legacy-aligned non-intrusive ROM methods: PODI-RBF, PODI-linear, POD-GPR, POD-NN, and POD-AE (`v0.6-project2-legacy-aligned-rom-methods-safe`).
-- Neural ROM field-loss alignment and POD-AE end-to-end fine-tuning (`v0.7-project2-neural-alignment-safe`).
-- Project-2 ROM reporting and post-processing workflow with CSV, Markdown, LaTeX, JSON, PNG, and PDF outputs (`v0.8-project2-rom-reporting-safe`).
-- Professional repository README and Project-2 usage documentation.
+This working-tree version does not assert a Git tag or a published remote release.
 
-### Notes
+## 0.1.0
 
-- True nonlinear intrusive POD-Galerkin is intentionally kept capability-disabled until the full FEniCS residual/Jacobian reduced solve is migrated and validated.
-- Large snapshot archives and generated ROM outputs are expected to live outside the repository in `parametric-plate-rom-data/`.
+Initial thermomechanical repository structure.

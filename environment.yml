@@ -1,20 +1,13 @@
-name: paramplate-fenics
-
+name: paramplate-rom
 channels:
   - conda-forge
-
 dependencies:
-  - python=3.10
+  - python=3.12
   - numpy
   - scipy
-  - pandas
   - matplotlib
   - scikit-learn
-  - tqdm
   - pyyaml
   - joblib
-  - tabulate
+  - pytest
   - pip
-  - pip:
-      - scienceplots
-      - torch

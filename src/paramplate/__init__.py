@@ -1,3 +1,6 @@
-"""Parametric Plate ROM package."""
+"""Computational companion for parameterized orthotropic plate studies."""
 
-__version__ = "0.1.0"
+from .capabilities import CAPABILITIES, CapabilityStatus, capabilities_for_study
+
+__all__ = ["CAPABILITIES", "CapabilityStatus", "capabilities_for_study"]
+__version__ = "0.2.0"

@@ -1,0 +1,26 @@
+{
+  "study": "dynamics",
+  "archive": "dynamics_smoke.npz",
+  "snapshot_key": "snapshots",
+  "parameter_key": "query_parameters",
+  "parameter_names": [
+    "load_amplitude",
+    "time"
+  ],
+  "output_name": "displacement",
+  "output_unit": "m",
+  "split_level": "trajectory",
+  "expected_shape": [
+    220,
+    96
+  ],
+  "trajectory_id_key": "trajectory_ids",
+  "time_key": "times",
+  "metric": "Euclidean smoke metric",
+  "sha256": null,
+  "notes": "Synthetic complete trajectories; split trajectory IDs before flattening.",
+  "metadata": {
+    "n_trajectories": 20,
+    "states_per_trajectory": 11
+  }
+}

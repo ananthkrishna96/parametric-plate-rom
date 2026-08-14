@@ -1,0 +1,23 @@
+{
+  "study": "thermomechanical",
+  "archive": "thermomechanical_smoke.npz",
+  "snapshot_key": "thermal_driver_snapshots",
+  "parameter_key": "parameters",
+  "parameter_names": [
+    "load_amplitude",
+    "absorbed_solar_flux"
+  ],
+  "output_name": "thermal_driver",
+  "output_unit": "K/m",
+  "split_level": "sample",
+  "expected_shape": [
+    60,
+    96
+  ],
+  "trajectory_id_key": null,
+  "time_key": null,
+  "metric": "field-specific Euclidean smoke metric",
+  "sha256": null,
+  "notes": "Synthetic one-field ROM data from matched sample assignments.",
+  "metadata": {}
+}
