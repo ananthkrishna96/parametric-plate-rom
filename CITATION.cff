@@ -3,8 +3,8 @@ title: "Parametric Plate ROM"
 message: "Please cite the associated PhD thesis and this software repository when using these workflows."
 type: software
 authors:
-  - family-names: "O M"
-    given-names: "Anantha Krishnan"
+  - family-names: "Mani"
+    given-names: "Anantha Krishnan Orunnukaran"
 version: "0.2.0"
 repository-code: "https://github.com/ananthkrishna96/parametric-plate-rom"
 keywords:
