@@ -1,12 +1,28 @@
 cff-version: 1.2.0
+
 title: "Parametric Plate ROM"
-message: "Please cite the associated PhD thesis and this software repository when using these workflows."
+
+message: "If you use this software, please cite this repository and the associated research works."
+
 type: software
+
 authors:
   - family-names: "O M"
     given-names: "Anantha Krishnan"
+
+  - family-names: "Pichi"
+    given-names: "Federico"
+
+  - family-names: "Noselli"
+    given-names: "Giovanni"
+
+  - family-names: "Rozza"
+    given-names: "Gianluigi"
+
 version: "0.2.0"
+
 repository-code: "https://github.com/ananthkrishna96/parametric-plate-rom"
+
 keywords:
   - Kirchhoff-Love plates
   - C0 interior-penalty Galerkin method
